@@ -14,7 +14,7 @@ from openai.types.responses.response_input_param import FunctionCallOutput
 
 from client.tools import get_tools
 from dbt_mcp.config.config import load_config
-from dbt_mcp.mcp.server import dbt_mcp
+from dbt_mcp.mcp.server import DbtMCP, create_dbt_mcp
 from dbt_mcp.semantic_layer.client import get_semantic_layer_fetcher
 from dbt_mcp.semantic_layer.types import OrderByParam, QueryMetricsSuccess
 
@@ -23,6 +23,11 @@ llm_client = OpenAI()
 config = load_config()
 assert config.semantic_layer_config
 semantic_layer_fetcher = get_semantic_layer_fetcher(config.semantic_layer_config)
+
+
+@pytest.fixture
+async def dbt_mcp() -> DbtMCP:
+    return await create_dbt_mcp()
 
 
 async def expect_metadata_tool_call(
@@ -45,7 +50,7 @@ async def expect_metadata_tool_call(
     assert tool_call.type == "function_call"
     assert function_name == expected_tool
     assert expected_arguments is None or function_arguments == expected_arguments
-    tool_response = await dbt_mcp.call_tool(
+    tool_response = (await create_dbt_mcp()).call_tool(
         function_name,
         json.loads(function_arguments),
     )
@@ -76,7 +81,7 @@ def deep_equal(dict1: Any, dict2: Any) -> bool:
 def expect_query_metrics_tool_call(
     messages: list,
     tools: list[FunctionToolParam],
-    expected_metrics: list[str],
+    expected_metrics: list[str] | None,
     expected_group_by: list[dict] | None = None,
     expected_order_by: list[dict] | None = None,
     expected_where: str | None = None,
@@ -93,7 +98,7 @@ def expect_query_metrics_tool_call(
     assert isinstance(tool_call, ResponseFunctionToolCall)
     assert tool_call.name == "query_metrics"
     args_dict = json.loads(tool_call.arguments)
-    assert set(args_dict["metrics"]) == set(expected_metrics)
+    assert set(args_dict["metrics"]) == set(expected_metrics or [])
     if expected_group_by is not None:
         assert deep_equal(args_dict["group_by"], expected_group_by)
     else:
@@ -153,11 +158,15 @@ def initial_messages(content: str) -> ResponseInputParam:
         ),
     ],
 )
-async def test_explicit_tool_request(content: str, expected_tool: str):
+async def test_explicit_tool_request(
+    content: str,
+    expected_tool: str,
+    dbt_mcp: DbtMCP,
+):
     response = llm_client.responses.create(
         model=LLM_MODEL,
         input=initial_messages(content),
-        tools=await get_tools(),
+        tools=await get_tools(dbt_mcp),
         parallel_tool_calls=False,
     )
     assert len(response.output) == 1
@@ -165,8 +174,8 @@ async def test_explicit_tool_request(content: str, expected_tool: str):
     assert response.output[0].name == expected_tool
 
 
-async def test_semantic_layer_fulfillment_query():
-    tools = await get_tools()
+async def test_semantic_layer_fulfillment_query(dbt_mcp: DbtMCP):
+    tools = await get_tools(dbt_mcp)
     messages = initial_messages(
         "How many orders did we fulfill this month last year?",
     )
@@ -182,10 +191,7 @@ async def test_semantic_layer_fulfillment_query():
         "get_dimensions",
         '{"metrics":["orders"]}',
     )
-    expect_query_metrics_tool_call(
-        messages,
-        tools,
-    )
+    expect_query_metrics_tool_call(messages, tools, None)
 
 
 async def test_semantic_layer_food_revenue_per_month():
@@ -236,8 +242,8 @@ async def test_semantic_layer_food_revenue_per_month():
     )
 
 
-async def test_semantic_layer_what_percentage_of_orders_were_large():
-    tools = await get_tools()
+async def test_semantic_layer_what_percentage_of_orders_were_large(dbt_mcp: DbtMCP):
+    tools = await get_tools(dbt_mcp)
     messages = initial_messages(
         "What percentage of orders were large this year?",
     )
