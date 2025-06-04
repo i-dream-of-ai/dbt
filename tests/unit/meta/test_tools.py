@@ -17,6 +17,7 @@ class TestMetaTools(unittest.TestCase):
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_fastmcp.tool = mock_tool_decorator
@@ -25,16 +26,16 @@ class TestMetaTools(unittest.TestCase):
         register_meta_tools(mock_fastmcp)
 
         # Test the get_dbt_mcp_server_version function
-        with patch('dbt_mcp.meta.tools.version') as mock_version:
+        with patch("dbt_mcp.meta.tools.version") as mock_version:
             mock_version.return_value = "1.0.0"
             result = tools["get_dbt_mcp_server_version"]()
-            
+
             # Verify the version function was called with correct package name
             mock_version.assert_called_once_with("dbt-mcp")
-            
+
             # Verify the result
             self.assertEqual(result, "1.0.0")
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()
