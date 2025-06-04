@@ -1,21 +1,32 @@
+import argparse
 import asyncio
+from dataclasses import dataclass
 
-import click
-
-import client
+from client import run
 from dbt_mcp.mcp.server import create_dbt_mcp
 
 
-@click.command()
-@click.option(
-    "--use-client",
-    is_flag=True,
-    default=False,
-    help="Run dbt-mcp in a client locally for debugging purposes.",
-)
-def main(use_client: bool) -> None:
-    if use_client:
-        asyncio.run(client.run())
+@dataclass
+class CliArgs:
+    use_client: bool
+
+
+def parse_args() -> CliArgs:
+    parser = argparse.ArgumentParser(description="dbt-mcp CLI tool")
+    parser.add_argument(
+        "--use-client",
+        action="store_true",
+        default=False,
+        help="Run dbt-mcp in a client locally for debugging purposes.",
+    )
+    args = parser.parse_args()
+    return CliArgs(use_client=args.use_client)
+
+
+def main() -> None:
+    args = parse_args()
+    if args.use_client:
+        asyncio.run(run())
     else:
         asyncio.run(create_dbt_mcp()).run()
 

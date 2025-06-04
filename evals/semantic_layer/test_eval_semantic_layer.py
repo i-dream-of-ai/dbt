@@ -50,7 +50,7 @@ async def expect_metadata_tool_call(
     assert tool_call.type == "function_call"
     assert function_name == expected_tool
     assert expected_arguments is None or function_arguments == expected_arguments
-    tool_response = (await create_dbt_mcp()).call_tool(
+    tool_response = await (await create_dbt_mcp()).call_tool(
         function_name,
         json.loads(function_arguments),
     )
@@ -158,11 +158,8 @@ def initial_messages(content: str) -> ResponseInputParam:
         ),
     ],
 )
-async def test_explicit_tool_request(
-    content: str,
-    expected_tool: str,
-    dbt_mcp: DbtMCP,
-):
+async def test_explicit_tool_request(content: str, expected_tool: str):
+    dbt_mcp = await create_dbt_mcp()
     response = llm_client.responses.create(
         model=LLM_MODEL,
         input=initial_messages(content),
