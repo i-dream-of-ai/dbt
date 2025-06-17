@@ -15,13 +15,13 @@ Downstream and upstream models are selected with a `+` and the number of childre
 - To select a particular model and the upstream ones (also known as parents), use the selector `<number of models>+<model_name>`.
 - To select a particular model and the downstream and upstream ones, use the selector `<number of models>+<model_name>+<number of models>`.
 
-If the user asks for all downstream or upstream models, use a sensible default like 50 and then iteratively traverse the DAG to collect the models.
+If the user asks for all downstream or upstream models, use a sensible default like 5 and then iteratively traverse the DAG to collect the models. If a timeout occurs, reduce this number.
 
 <example>
 User: give me all models downstream of orders
 Think step-by-step:
 - The user is asking for downstream models so I should use the `<model_name>+<number of models>` syntax
 - The user is asking about the orders model, so the selection will look like this: `orders+<number of models>`
-- The user is asking for all models, so I should start with a sensible default like 50 and iterate from there: `orders+50`
-Final answer: `orders+50`
+- The user is asking for all models, so I should start with a sensible default like 5 and iterate from there: `orders+5`
+Final answer: `orders+5`
 </example>
