@@ -3,8 +3,8 @@ from functools import cache
 from dbtsl.api.shared.query_params import (
     GroupByParam,
     OrderByGroupBy,
-    OrderBySpec,
     OrderByMetric,
+    OrderBySpec,
 )
 from dbtsl.client.sync import SyncSemanticLayerClient
 from dbtsl.error import QueryFailedError
@@ -36,23 +36,16 @@ class SemanticLayerFetcher:
 
     @cache
     def list_metrics(self) -> list[MetricToolResponse]:
-        metrics_result = submit_request(
-            ConnAttr(
-                host=self.host,
-                params={"environmentid": self.config.prod_environment_id},
-                auth_header=f"Bearer {self.config.service_token}",
-            ),
-            {"query": GRAPHQL_QUERIES["metrics"]},
-        )
-        return [
-            MetricToolResponse(
-                name=m.get("name"),
-                type=m.get("type"),
-                label=m.get("label"),
-                description=m.get("description"),
-            )
-            for m in metrics_result["data"]["metrics"]
-        ]
+        with self.sl_client.session():
+            return [
+                MetricToolResponse(
+                    name=m.name,
+                    type=m.type,
+                    label=m.label,
+                    description=m.description,
+                )
+                for m in self.sl_client.metrics()
+            ]
 
     def get_dimensions(self, metrics: list[str]) -> list[DimensionToolResponse]:
         metrics_key = ",".join(sorted(metrics))
@@ -262,6 +255,7 @@ def get_semantic_layer_fetcher(config: SemanticLayerConfig) -> SemanticLayerFetc
         environment_id=config.prod_environment_id,
         auth_token=config.service_token,
         host=host,
+        lazy=True,
     )
 
     return SemanticLayerFetcher(
