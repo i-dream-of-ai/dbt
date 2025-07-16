@@ -101,32 +101,29 @@ Cursor MCP docs [here](https://docs.cursor.com/context/model-context-protocol) f
 
 ![mcp-vscode-settings](https://github.com/user-attachments/assets/3d3fa853-2398-422a-8a6d-7f0a97120aba)
 
-4. Click "Edit in settings.json" under "Mcp > Discovery"
+4. Open the command palette `Control/Command + Shift + P`, and select either "MCP: Open Workspace Folder MCP Configuration" or "MCP: Open User Configuration" depending on whether you want to install the MCP server for this workspace or for all workspaces for the user
 
-5. Add your server configuration (`dbt`) to the provided `settings.json` file as one of the servers:
+5. Add your server configuration (`dbt`) to the provided `mcp.json` file as one of the servers:
 ```json
 {
-    "mcp": {
-        "inputs": [],
-        "servers": {
-          "dbt": {
-            "command": "uvx",
-            "args": [
-              "--env-file",
-              "<path-to-.env-file>",
-              "dbt-mcp"
-            ]
-          },
-        }
-    }
+	"servers": {
+		"dbt": {
+			"command": "uvx",
+      "args": [
+        "--env-file",
+        "<path-to-.env-file>",
+        "dbt-mcp"
+      ]
+		}
+	}
 }
 ```
 
 `<path-to-.env-file>` is where you saved the `.env` file from the Setup step
 
 6. You can start, stop, and configure your MCP servers by:
-- Running the `MCP: List Servers` command from the Command Palette (Control + Command + P) and selecting the server
-- Utlizing the keywords inline within the `settings.json` file
+- Running the `MCP: List Servers` command from the Command Palette (Control/Command + Shift + P) and selecting the server
+- Utlizing the keywords inline within the `mcp.json` file
 
 ![inline-management](https://github.com/user-attachments/assets/d33d4083-5243-4b36-adab-72f12738c263)
 
