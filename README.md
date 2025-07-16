@@ -172,3 +172,4 @@ VS Code MCP docs [here](https://code.visualstudio.com/docs/copilot/chat/mcp-serv
 ## Contributing
 
 Read `CONTRIBUTING.md` for instructions on how to get involved!
+
