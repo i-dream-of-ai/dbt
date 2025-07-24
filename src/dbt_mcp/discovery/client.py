@@ -60,6 +60,29 @@ class GraphQLQueries:
                                     executeCompletedAt
                                     executeStartedAt
                                 }
+                                tests {
+                                    name
+                                    description
+                                    columnName
+                                    testType
+                                    executionInfo {
+                                        lastRunGeneratedAt
+                                        lastRunStatus
+                                        executeCompletedAt
+                                        executeStartedAt
+                                    }
+                                }
+                                parents {
+                                name
+                                resourceType
+                                ... on SourceAppliedStateNestedNode {
+                                  freshness {
+                                    freshnessChecked
+                                    freshnessStatus
+                                    freshnessRunGeneratedAt
+                                  }
+                                }
+                              }
                             }
                         }
                     }
