@@ -61,6 +61,17 @@ class GraphQLQueries:
                                         type
                                     }
                                 }
+                                executionInfo {
+                                    lastRunGeneratedAt
+                                    lastRunStatus
+                                    executeCompletedAt
+                                    executeStartedAt
+                                    executeEndedAt
+                                    executeDuration
+                                    executeError
+                                    executeErrorType
+                                    executeErrorDetails
+                                }
                             }
                         }
                     }
