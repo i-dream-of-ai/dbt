@@ -54,23 +54,11 @@ class GraphQLQueries:
                                 description
                                 database
                                 schema
-                                catalog {
-                                    columns {
-                                        description
-                                        name
-                                        type
-                                    }
-                                }
                                 executionInfo {
                                     lastRunGeneratedAt
                                     lastRunStatus
                                     executeCompletedAt
                                     executeStartedAt
-                                    executeEndedAt
-                                    executeDuration
-                                    executeError
-                                    executeErrorType
-                                    executeErrorDetails
                                 }
                             }
                         }
