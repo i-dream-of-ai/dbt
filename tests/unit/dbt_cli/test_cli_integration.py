@@ -39,62 +39,101 @@ class TestDbtCliIntegration(unittest.TestCase):
 
         # Test cases for different command types
         test_cases = [
-            # Command name, args, expected command list
-            ("build", [], ["/path/to/dbt", "build", "--quiet"]),
+            # Command name, kwargs, expected command list
+            ("build", {}, ["/path/to/dbt", "build", "--quiet"]),
             (
                 "compile",
-                [],
+                {},
                 ["/path/to/dbt", "compile", "--quiet"],
             ),
             (
                 "docs",
-                [],
+                {},
                 ["/path/to/dbt", "docs", "--quiet", "generate"],
             ),
             (
                 "ls",
-                [],
+                {},
                 ["/path/to/dbt", "list", "--quiet"],
             ),
-            ("parse", [], ["/path/to/dbt", "parse", "--quiet"]),
-            ("run", [], ["/path/to/dbt", "run", "--quiet"]),
-            ("test", [], ["/path/to/dbt", "test", "--quiet"]),
+            ("parse", {}, ["/path/to/dbt", "parse", "--quiet"]),
+            ("run", {}, ["/path/to/dbt", "run", "--quiet"]),
+            ("test", {}, ["/path/to/dbt", "test", "--quiet"]),
             (
                 "show",
-                ["SELECT * FROM model"],
+                {"sql_query": "SELECT * FROM model"},
                 [
                     "/path/to/dbt",
                     "show",
+                    "--favor-state",
                     "--inline",
                     "SELECT * FROM model",
-                    "--favor-state",
                     "--output",
                     "json",
                 ],
             ),
             (
                 "show",
-                ["SELECT * FROM model", 10],
+                {"sql_query": "SELECT * FROM model", "limit": 10},
                 [
                     "/path/to/dbt",
                     "show",
+                    "--favor-state",
                     "--inline",
                     "SELECT * FROM model",
-                    "--favor-state",
                     "--limit",
                     "10",
                     "--output",
                     "json",
                 ],
             ),
+            (
+                "show",
+                {"selector": "my_model"},
+                [
+                    "/path/to/dbt",
+                    "show",
+                    "--favor-state",
+                    "--select",
+                    "my_model",
+                    "--output",
+                    "json",
+                ],
+            ),
+            (
+                "compile",
+                {"sql_query": "SELECT * FROM model"},
+                [
+                    "/path/to/dbt",
+                    "compile",
+                    "--quiet",
+                    "--inline",
+                    "SELECT * FROM model",
+                ],
+            ),
+            (
+                "compile",
+                {"selector": "my_model"},
+                [
+                    "/path/to/dbt",
+                    "compile",
+                    "--quiet",
+                    "--select",
+                    "my_model",
+                ],
+            ),
         ]
 
         # Run each test case
-        for command_name, args, expected_args in test_cases:
+        for command_name, kwargs, expected_args in test_cases:
+            print(command_name)
+            print(kwargs)
+            print(expected_args)
             mock_popen.reset_mock()
 
             # Call the function
-            result = tools[command_name](*args)
+            result = tools[command_name](**kwargs)
+            print(result)
 
             # Verify the command was called correctly
             mock_popen.assert_called_once()

@@ -75,8 +75,50 @@ def register_dbt_cli_tools(dbt_mcp: FastMCP, config: DbtCliConfig) -> None:
         return _run_dbt_command(["build"], selector, is_selectable=True)
 
     @dbt_mcp.tool(description=get_prompt("dbt_cli/compile"))
-    def compile() -> str:
-        return _run_dbt_command(["compile"])
+    def compile( 
+        sql_query: str | None = Field(
+            default=None, description=get_prompt("dbt_cli/args/sql_query")
+        ),
+        selector: str | None = Field(
+            default=None, description=get_prompt("dbt_cli/args/selectors")
+        ),
+    ) -> str:
+        """
+        Render executable SQL.
+
+        **One** of ``sql_query`` or ``selector`` may be passed. If both are
+        provided, an error string is returned.
+
+        An empty ``selector`` compiles the entire project.
+
+        Parameters
+        ----------
+        sql_query:
+            Raw SQL to compile via ``--inline``.
+        selector:
+            dbt node selector to compile via ``--select``.
+        """
+        # Handle Pydantic Field objects that might be passed instead of None
+        if hasattr(sql_query, 'default'):
+            sql_query = None
+        if hasattr(selector, 'default'):
+            selector = None
+            
+        if sql_query is not None and selector is not None:
+            return (
+                "You cannot provide *both* `sql_query` *and* `selector` "
+                "when calling the `compile` tool"
+            )
+
+        args: list[str] = ["compile"]
+        if sql_query is not None:
+            args.extend(["--inline", sql_query])
+            return _run_dbt_command(args)
+        elif selector is not None:
+            return _run_dbt_command(args, selector, is_selectable=True)
+        else:
+            # Neither provided - compile entire project
+            return _run_dbt_command(args)
 
     @dbt_mcp.tool(description=get_prompt("dbt_cli/docs"))
     def docs() -> str:
@@ -122,25 +164,72 @@ def register_dbt_cli_tools(dbt_mcp: FastMCP, config: DbtCliConfig) -> None:
 
     @dbt_mcp.tool(description=get_prompt("dbt_cli/show"))
     def show(
-        sql_query: str = Field(description=get_prompt("dbt_cli/args/sql_query")),
+        sql_query: str | None = Field(
+            default=None, description=get_prompt("dbt_cli/args/sql_query")
+        ),
+        selector: str | None = Field(
+            default=None, description=get_prompt("dbt_cli/args/selectors")
+        ),
         limit: int | None = Field(
             default=None, description=get_prompt("dbt_cli/args/limit")
         ),
     ) -> str:
-        args = ["show", "--inline", sql_query, "--favor-state"]
-        # This is quite crude, but it should be okay for now
-        # until we have a dbt Fusion integration.
-        cli_limit = None
-        if "limit" in sql_query.lower():
-            # When --limit=-1, dbt won't apply a separate limit.
+        """
+        Execute `dbt show` with either an inline SQL query **or** a selector.
+
+        Exactly one of `sql_query` or `selector` must be supplied. If both are
+        provided (or neither), an error message is returned so the caller can
+        correct the invocation.
+
+        Arguments
+        ---------
+        sql_query : str | None
+            Raw SQL to preview via `--inline`.
+        selector : str | None
+            dbt node selection syntax to preview via `--select`.
+        limit : int | None
+            Optional row limit to apply. If the SQL string already contains an
+            explicit `LIMIT` clause we pass `--limit=-1` so dbt does not add a
+            second limit.
+        """
+        # Handle Pydantic Field objects that might be passed instead of None
+        if hasattr(sql_query, 'default'):
+            sql_query = None
+        if hasattr(selector, 'default'):
+            selector = None
+        if hasattr(limit, 'default'):
+            limit = None
+        
+        # Validate mutually–exclusive arguments
+        if (sql_query is None and selector is None) or (
+            sql_query is not None and selector is not None
+        ):
+            return (
+                "You must provide *either* `sql_query` *or* `selector` (but not both) "
+                "when calling the `show` tool."
+            )
+
+        # Base command
+        args = ["show", "--favor-state"]
+
+        # Inline SQL vs selector
+        if sql_query is not None:
+            args.extend(["--inline", sql_query])
+        else:  # selector is not None
+            args.extend(["--select", *str(selector).split(" ")])
+
+        # Handle limit logic
+        cli_limit: int | None = None
+        if sql_query and "limit" in sql_query.lower():
+            # If the user wrote their own LIMIT we tell dbt not to add another.
             cli_limit = -1
-        elif limit:
-            # This can be problematic if the LLM provides
-            # a SQL limit and a `limit` argument. However, preferencing the limit
-            # in the SQL query leads to a better experience when the LLM
-            # makes that mistake.
+        elif limit is not None:
             cli_limit = limit
+
         if cli_limit is not None:
             args.extend(["--limit", str(cli_limit)])
+
+        # Always request JSON so callers can parse structured results
         args.extend(["--output", "json"])
+
         return _run_dbt_command(args)

@@ -42,9 +42,9 @@ def mock_fastmcp():
             None,
             [
                 "show",
+                "--favor-state",
                 "--inline",
                 "SELECT * FROM my_model LIMIT 10",
-                "--favor-state",
                 "--limit",
                 "-1",
                 "--output",
@@ -57,9 +57,9 @@ def mock_fastmcp():
             None,
             [
                 "show",
+                "--favor-state",
                 "--inline",
                 "select * from my_model limit 5",
-                "--favor-state",
                 "--limit",
                 "-1",
                 "--output",
@@ -72,9 +72,9 @@ def mock_fastmcp():
             10,
             [
                 "show",
+                "--favor-state",
                 "--inline",
                 "SELECT * FROM my_model",
-                "--favor-state",
                 "--limit",
                 "10",
                 "--output",
@@ -87,9 +87,9 @@ def mock_fastmcp():
             None,
             [
                 "show",
+                "--favor-state",
                 "--inline",
                 "SELECT * FROM my_model",
-                "--favor-state",
                 "--output",
                 "json",
             ],
@@ -119,7 +119,7 @@ def test_show_command_limit_logic(
     show_tool = tools["show"]
 
     # Call show tool with test parameters
-    show_tool(sql_query=sql_query, limit=limit_param)
+    result = show_tool(sql_query=sql_query, limit=limit_param)
 
     # Verify the command was called with expected arguments
     assert mock_calls
@@ -211,9 +211,9 @@ def test_show_command_correctly_formatted(
     args_list = mock_calls[0]
     assert args_list[0].endswith("dbt")
     assert args_list[1] == "show"
-    assert args_list[2] == "--inline"
-    assert args_list[3] == "SELECT * FROM my_model"
-    assert args_list[4] == "--favor-state"
+    assert args_list[2] == "--favor-state"
+    assert args_list[3] == "--inline"
+    assert args_list[4] == "SELECT * FROM my_model"
 
 
 def test_list_command_timeout_handling(monkeypatch: MonkeyPatch, mock_fastmcp):
@@ -241,3 +241,130 @@ def test_list_command_timeout_handling(monkeypatch: MonkeyPatch, mock_fastmcp):
     result = list_tool(selector="my_model", resource_type=["model"])
     assert "Timeout: dbt command took too long to complete" in result
     assert "Try using a specific selector to narrow down the results" in result
+
+
+def test_show_command_with_selector(
+    monkeypatch: MonkeyPatch, mock_process, mock_fastmcp
+):
+    # Mock Popen
+    mock_calls = []
+
+    def mock_popen(args, **kwargs):
+        mock_calls.append(args)
+        return mock_process
+
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+
+    # Setup
+    mock_fastmcp_obj, tools = mock_fastmcp
+    register_dbt_cli_tools(mock_fastmcp_obj, mock_dbt_cli_config)
+    show_tool = tools["show"]
+
+    # Execute with selector
+    show_tool(selector="my_model")
+
+    # Verify
+    assert mock_calls
+    args_list = mock_calls[0]
+    expected_args = [
+        "/path/to/dbt",
+        "show",
+        "--favor-state",
+        "--select",
+        "my_model",
+        "--output",
+        "json",
+    ]
+    assert args_list == expected_args
+
+
+def test_show_command_validation_errors(mock_fastmcp):
+    # Setup
+    mock_fastmcp_obj, tools = mock_fastmcp
+    register_dbt_cli_tools(mock_fastmcp_obj, mock_dbt_cli_config)
+    show_tool = tools["show"]
+
+    # Test both sql_query and selector provided
+    result = show_tool(sql_query="SELECT * FROM model", selector="my_model")
+    assert "You must provide *either* `sql_query` *or* `selector` (but not both)" in result
+
+    # Test neither sql_query nor selector provided
+    result = show_tool()
+    assert "You must provide *either* `sql_query` *or* `selector` (but not both)" in result
+
+
+def test_compile_command_with_selector(
+    monkeypatch: MonkeyPatch, mock_process, mock_fastmcp
+):
+    # Mock Popen
+    mock_calls = []
+
+    def mock_popen(args, **kwargs):
+        mock_calls.append(args)
+        return mock_process
+
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+
+    # Setup
+    mock_fastmcp_obj, tools = mock_fastmcp
+    register_dbt_cli_tools(mock_fastmcp_obj, mock_dbt_cli_config)
+    compile_tool = tools["compile"]
+
+    # Execute with selector
+    compile_tool(selector="my_model")
+
+    # Verify
+    assert mock_calls
+    args_list = mock_calls[0]
+    expected_args = [
+        "/path/to/dbt",
+        "compile",
+        "--quiet",
+        "--select",
+        "my_model",
+    ]
+    assert args_list == expected_args
+
+
+def test_compile_command_with_sql_query(
+    monkeypatch: MonkeyPatch, mock_process, mock_fastmcp
+):
+    # Mock Popen
+    mock_calls = []
+
+    def mock_popen(args, **kwargs):
+        mock_calls.append(args)
+        return mock_process
+
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+
+    # Setup
+    mock_fastmcp_obj, tools = mock_fastmcp
+    register_dbt_cli_tools(mock_fastmcp_obj, mock_dbt_cli_config)
+    compile_tool = tools["compile"]
+
+    # Execute with sql_query
+    compile_tool(sql_query="SELECT * FROM my_model")
+
+    # Verify
+    assert mock_calls
+    args_list = mock_calls[0]
+    expected_args = [
+        "/path/to/dbt",
+        "compile",
+        "--quiet",
+        "--inline",
+        "SELECT * FROM my_model",
+    ]
+    assert args_list == expected_args
+
+
+def test_compile_command_validation_errors(mock_fastmcp):
+    # Setup
+    mock_fastmcp_obj, tools = mock_fastmcp
+    register_dbt_cli_tools(mock_fastmcp_obj, mock_dbt_cli_config)
+    compile_tool = tools["compile"]
+
+    # Test both sql_query and selector provided
+    result = compile_tool(sql_query="SELECT * FROM model", selector="my_model")
+    assert "You cannot provide *both* `sql_query` *and* `selector`" in result
