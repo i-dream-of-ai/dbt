@@ -1,6 +1,7 @@
 import os
 import subprocess
 from collections.abc import Iterable, Sequence
+from typing import Protocol
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
@@ -12,7 +13,37 @@ from dbt_mcp.tools.register import register_tools
 from dbt_mcp.tools.tool_names import ToolName
 
 
-def create_dbt_cli_tool_definitions(config: DbtCliConfig) -> list[ToolDefinition]:
+class CommandRunner(Protocol):
+    def run(self, command: list[str]) -> str: ...
+
+
+class SubprocessCommandRunner:
+    def __init__(
+        self,
+        *,
+        dbt_path: str,
+        cwd_path: str | None,
+        timeout: int | None,
+    ):
+        self.dbt_path = dbt_path
+        self.cwd_path = cwd_path
+        self.timeout = timeout
+
+    def run(self, command: list[str]) -> str:
+        process = subprocess.Popen(
+            args=[self.dbt_path, *command],
+            cwd=self.cwd_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        output, _ = process.communicate(timeout=self.timeout)
+        return output
+
+
+def create_dbt_cli_tool_definitions(
+    command_runner: CommandRunner,
+) -> list[ToolDefinition]:
     def _run_dbt_command(
         command: list[str],
         selector: str | None = None,
@@ -44,21 +75,7 @@ def create_dbt_cli_tool_definitions(config: DbtCliConfig) -> list[ToolDefinition
                 main_command = full_command[0]
                 command_args = full_command[1:] if len(full_command) > 1 else []
                 full_command = [main_command, "--quiet", *command_args]
-
-            # We change the path only if this is an absolute path, otherwise we can have
-            # problems with relative paths applied multiple times as DBT_PROJECT_DIR
-            # is applied to dbt Core and Fusion as well (but not the dbt Cloud CLI)
-            cwd_path = config.project_dir if os.path.isabs(config.project_dir) else None
-
-            process = subprocess.Popen(
-                args=[config.dbt_path, *full_command],
-                cwd=cwd_path,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
-            output, _ = process.communicate(timeout=config.dbt_cli_timeout)
-            return output or "OK"
+            return command_runner.run(full_command) or "OK"
         except subprocess.TimeoutExpired:
             return "Timeout: dbt command took too long to complete." + (
                 " Try using a specific selector to narrow down the results."
@@ -180,8 +197,17 @@ def register_dbt_cli_tools(
     config: DbtCliConfig,
     exclude_tools: Sequence[ToolName] = [],
 ) -> None:
+    # We change the path only if this is an absolute path, otherwise we can have
+    # problems with relative paths applied multiple times as DBT_PROJECT_DIR
+    # is applied to dbt Core and Fusion as well (but not the dbt Cloud CLI)
+    cwd_path = config.project_dir if os.path.isabs(config.project_dir) else None
+    command_runner = SubprocessCommandRunner(
+        dbt_path=config.dbt_path,
+        cwd_path=cwd_path,
+        timeout=config.dbt_cli_timeout,
+    )
     register_tools(
         dbt_mcp,
-        create_dbt_cli_tool_definitions(config),
+        create_dbt_cli_tool_definitions(command_runner),
         exclude_tools,
     )
