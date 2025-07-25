@@ -9,5 +9,5 @@ Examples:
 - "How many users did we have last month?"
 
 Synonyms:
-- Pay special attention to any synonyms which are defined in the config.meta properties of metrics
-- Use this synonyms to map questions from the user to the appropriate metrics
+- Pay special attention to any synonyms which are defined in the meta properties returned from metrics
+- Use these synonyms to map questions from the user to the appropriate metrics

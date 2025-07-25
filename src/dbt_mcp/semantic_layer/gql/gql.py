@@ -4,7 +4,9 @@ query GetMetrics($environmentId: BigInt!) {
   metrics(environmentId: $environmentId) {
     description
     label
-    meta
+    config {
+      meta
+    }
     name
     type
   }
