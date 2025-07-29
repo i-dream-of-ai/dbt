@@ -6,6 +6,41 @@ This MCP (Model Context Protocol) server provides tools to interact with dbt. Re
 
 ![architecture diagram of the dbt MCP server](https://raw.githubusercontent.com/dbt-labs/dbt-mcp/refs/heads/main/docs/d2.png)
 
+## Tools
+
+### dbt CLI
+
+* `build` - Executes models, tests, snapshots, and seeds in dependency order
+* `compile` - Generates executable SQL from models, tests, and analyses without running them
+* `docs` - Generates documentation for the dbt project
+* `ls` (list) - Lists resources in the dbt project, such as models and tests
+* `parse` - Parses and validates the project’s files for syntax correctness
+* `run` -  Executes models to materialize them in the database
+* `test` - Runs tests to validate data and model integrity
+* `show` - Runs a query against the data warehouse
+
+> Allowing your client to utilize dbt commands through this MCP tooling could modify your data models, sources, and warehouse objects. Proceed only if you trust the client and understand the potential impact.
+
+
+### Semantic Layer
+
+* `list_metrics` - Retrieves all defined metrics
+* `get_dimensions` - Gets dimensions associated with specified metrics
+* `get_entities` - Gets entities associated with specified metrics
+* `query_metrics` - Queries metrics with optional grouping, ordering, filtering, and limiting
+
+
+### Discovery
+* `get_mart_models` - Gets all mart models
+* `get_all_models` - Gets all models
+* `get_model_details` - Gets details for a specific model
+* `get_model_parents` - Gets parent nodes of a specific model
+* `get_model_children` - Gets children modes of a specific model
+
+### Remote
+* `text_to_sql` - Generate SQL from natural language requests
+* `execute_sql` - Execute SQL on dbt Cloud's backend infrastructure with support for Semantic Layer SQL syntax. Note: using a PAT instead of a service token for `DBT_TOKEN` is required for this tool.
+
 ## Setup
 
 1. [Install uv](https://docs.astral.sh/uv/getting-started/installation/)
@@ -154,41 +189,6 @@ VS Code MCP docs [here](https://code.visualstudio.com/docs/copilot/chat/mcp-serv
 ## Troubleshooting
 
 - Some MCP clients may be unable to find `uvx` from the JSON config. If this happens, try finding the full path to `uvx` with `which uvx` on Unix systems and placing this full path in the JSON. For instance: `"command": "/the/full/path/to/uvx"`.
-
-## Tools
-
-### dbt CLI
-
-* `build` - Executes models, tests, snapshots, and seeds in dependency order
-* `compile` - Generates executable SQL from models, tests, and analyses without running them
-* `docs` - Generates documentation for the dbt project
-* `ls` (list) - Lists resources in the dbt project, such as models and tests
-* `parse` - Parses and validates the project’s files for syntax correctness
-* `run` -  Executes models to materialize them in the database
-* `test` - Runs tests to validate data and model integrity
-* `show` - Runs a query against the data warehouse
-
-> Allowing your client to utilize dbt commands through this MCP tooling could modify your data models, sources, and warehouse objects. Proceed only if you trust the client and understand the potential impact.
-
-
-### Semantic Layer
-
-* `list_metrics` - Retrieves all defined metrics
-* `get_dimensions` - Gets dimensions associated with specified metrics
-* `get_entities` - Gets entities associated with specified metrics
-* `query_metrics` - Queries metrics with optional grouping, ordering, filtering, and limiting
-
-
-### Discovery
-* `get_mart_models` - Gets all mart models
-* `get_all_models` - Gets all models
-* `get_model_details` - Gets details for a specific model
-* `get_model_parents` - Gets parent nodes of a specific model
-* `get_model_children` - Gets children modes of a specific model
-
-### Remote
-* `text_to_sql` - Generate SQL from natural language requests
-* `execute_sql` - Execute SQL on dbt Cloud's backend infrastructure with support for Semantic Layer SQL syntax. Note: using a PAT instead of a service token for `DBT_TOKEN` is required for this tool.
 
 ## Contributing
 
