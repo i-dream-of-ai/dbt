@@ -8,7 +8,9 @@ This MCP (Model Context Protocol) server provides tools to interact with dbt. Re
 
 ## Documentation
 
-[For setup information and to learn more about dbt MCP functionalities, please go to our docs site.](https://docs.getdbt.com/docs/dbt-ai/about-mcp#mcp-integrations)
+[To learn more about dbt MCP functionalities, setup and integrations, please go to our docs site.](https://docs.getdbt.com/docs/dbt-ai/about-mcp#mcp-integrations). 
+
+For integration guides, we do
 
 ## Contributing
 
