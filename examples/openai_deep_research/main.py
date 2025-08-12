@@ -11,10 +11,11 @@ def main():
     token = os.environ.get("DBT_TOKEN")
     host = os.environ.get("DBT_HOST", "cloud.getdbt.com")
     input_text = (
-        "Determine growth opportunities for a food delivery company in the US."
+        "Determine growth opportunities for a jaffle food delivery product in the US."
         + " Use dbt to analyze our data."
     )
     run_id = "".join(random.choices(string.ascii_letters + string.digits, k=6))
+    print(f"Starting run with ID: {run_id}")
     response = client.responses.create(
         model="o3-deep-research",
         input=input_text,
@@ -29,13 +30,12 @@ def main():
                 "require_approval": "never",
                 "headers": {
                     "Authorization": f"token {token}",
-                    "x-dbt-prod-environment-id": prod_environment_id,
+                    "x-dbt-environment-id": prod_environment_id,
                 },
             },
         ],
         metadata={"run_id": run_id},
     )
-    print(f"Run ID: {run_id}")
     print(f"Output:\n{response.output_text}")
 
 
