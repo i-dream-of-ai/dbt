@@ -24,6 +24,7 @@ class ToolName(Enum):
     GET_DIMENSIONS = "get_dimensions"
     GET_ENTITIES = "get_entities"
     QUERY_METRICS = "query_metrics"
+    GET_METRICS_COMPILED_SQL = "get_metrics_compiled_sql"
 
     # Discovery tools
     GET_MART_MODELS = "get_mart_models"
@@ -32,7 +33,7 @@ class ToolName(Enum):
     GET_MODEL_PARENTS = "get_model_parents"
     GET_MODEL_CHILDREN = "get_model_children"
 
-    # Remote tools
+    # SQL tools
     TEXT_TO_SQL = "text_to_sql"
     EXECUTE_SQL = "execute_sql"
 
