@@ -45,8 +45,12 @@ async def main():
                 if result:
                     conversation = result.to_input_list()
                 conversation.append({"role": "user", "content": input("User > ")})
-                result = await Runner.run(agent, conversation)
-                print(result.final_output)
+                async for event in Runner.run_streamed(
+                    agent, conversation
+                ).stream_events():
+                    print(event)
+                # result = await Runner.run(agent, conversation)
+                # print(result.final_output)
 
 
 if __name__ == "__main__":
