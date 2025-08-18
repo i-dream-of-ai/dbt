@@ -56,6 +56,7 @@ def create_dbt_cli_tool_definitions(config: DbtCliConfig) -> list[ToolDefinition
                 cwd=cwd_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
                 text=True,
             )
             output, _ = process.communicate(timeout=config.dbt_cli_timeout)
@@ -117,9 +118,7 @@ def create_dbt_cli_tool_definitions(config: DbtCliConfig) -> list[ToolDefinition
 
     def show(
         sql_query: str = Field(description=get_prompt("dbt_cli/args/sql_query")),
-        limit: int | None = Field(
-            default=None, description=get_prompt("dbt_cli/args/limit")
-        ),
+        limit: int = Field(default=5, description=get_prompt("dbt_cli/args/limit")),
     ) -> str:
         args = ["show", "--inline", sql_query, "--favor-state"]
         # This is quite crude, but it should be okay for now
