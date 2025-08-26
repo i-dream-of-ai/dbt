@@ -28,7 +28,7 @@ async def main():
         result = await session.call_tool(
             name="execute_sql",
             arguments={
-                "sql": "SELECT * FROM { ref('food_orders') }",
+                "sql": "SELECT * FROM {{ ref('food_orders') }}",
             },
         )
         print(result)
