@@ -14,6 +14,8 @@ async def session_context() -> AsyncGenerator[ClientSession, None]:
             headers={
                 "Authorization": f"token {os.environ.get('DBT_TOKEN')}",
                 "x-dbt-prod-environment-id": os.environ.get("DBT_PROD_ENV_ID", ""),
+                "x-dbt-user-id": os.environ.get("DBT_USER_ID", ""),
+                "x-dbt-dev-environment-id": os.environ.get("DBT_DEV_ENV_ID", ""),
             },
         ) as (
             read_stream,

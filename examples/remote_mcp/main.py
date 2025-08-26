@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from remote_mcp.session import session_context
 
@@ -25,10 +26,12 @@ async def main():
         # num_food_order_content = num_food_orders.content[0]
         # assert isinstance(num_food_order_content, TextContent)
         # print(f"Number of food orders: {num_food_order_content.text}")
+        print(os.environ.get("DBT_USER_ID", ""))
+        print(os.environ.get("DBT_DEV_ENV_ID", ""))
         result = await session.call_tool(
             name="execute_sql",
             arguments={
-                "sql": "SELECT * FROM {{ ref('food_orders') }}",
+                "sql": "SELECT * FROM {{ ref('orders') }}",
             },
         )
         print(result)
