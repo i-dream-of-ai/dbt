@@ -54,7 +54,7 @@ mock_semantic_layer_config = SemanticLayerConfig(
 
 mock_admin_api_config = AdminApiConfig(
     url="http://localhost:8000",
-    token="token",
+    headers={"Authorization": "Bearer token"},
     account_id=1,
     prod_environment_id=1,
 )

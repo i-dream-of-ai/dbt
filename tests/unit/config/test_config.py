@@ -190,7 +190,7 @@ class TestLoadConfig:
         assert config.semantic_layer_config is not None
         assert config.admin_api_config is not None
         assert config.admin_api_config.url == "https://test.dbt.com"
-        assert config.admin_api_config.token == "test_token"
+        assert config.admin_api_config.headers == {"Authorization": "Bearer test_token"}
         assert config.admin_api_config.account_id == 123
         assert config.admin_api_config.prod_environment_id == 123
 

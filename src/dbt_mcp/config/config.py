@@ -49,7 +49,7 @@ class SqlConfig(BaseModel):
 
 class AdminApiConfig(BaseModel):
     url: str
-    token: str
+    headers: dict[str, str]
     account_id: int
     prod_environment_id: int | None = None
 
@@ -229,7 +229,7 @@ def load_config() -> Config:
             url = f"https://{settings.actual_host}"
         admin_api_config = AdminApiConfig(
             url=url,
-            token=settings.dbt_token,
+            headers={"Authorization": f"Bearer {settings.dbt_token}"},
             account_id=settings.dbt_account_id,
             prod_environment_id=settings.actual_prod_environment_id,
         )

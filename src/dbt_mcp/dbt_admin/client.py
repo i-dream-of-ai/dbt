@@ -1,6 +1,7 @@
 import logging
 from functools import cache
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import requests
 
 from dbt_mcp.config.config import AdminApiConfig
@@ -20,12 +21,11 @@ class DbtAdminAPIClient:
     def __init__(self, config: AdminApiConfig):
         self.config = config
         self.headers = {
-            "Authorization": f"Bearer {config.token}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | config.headers
 
-    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def _make_request(self, method: str, endpoint: str, **kwargs) -> dict[str, Any]:
         """Make a request to the dbt API."""
         url = f"{self.config.url}{endpoint}"
 
@@ -38,7 +38,7 @@ class DbtAdminAPIClient:
             raise AdminAPIError(f"API request failed: {e}")
 
     @cache
-    def list_jobs(self, account_id: int, **params) -> List[Dict[str, Any]]:
+    def list_jobs(self, account_id: int, **params) -> list[dict[str, Any]]:
         """List jobs for an account."""
         result = self._make_request(
             "GET",
@@ -105,7 +105,7 @@ class DbtAdminAPIClient:
 
         return filtered_data
 
-    def get_job_details(self, account_id: int, job_id: int) -> Dict[str, Any]:
+    def get_job_details(self, account_id: int, job_id: int) -> dict[str, Any]:
         """Get details for a specific job."""
         result = self._make_request(
             "GET",
@@ -115,7 +115,7 @@ class DbtAdminAPIClient:
 
     def trigger_job_run(
         self, account_id: int, job_id: int, cause: str, **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Trigger a job run."""
         data = {"cause": cause, **kwargs}
         result = self._make_request(
@@ -123,7 +123,7 @@ class DbtAdminAPIClient:
         )
         return result.get("data", {})
 
-    def list_jobs_runs(self, account_id: int, **params) -> List[Dict[str, Any]]:
+    def list_jobs_runs(self, account_id: int, **params) -> list[dict[str, Any]]:
         """List runs for an account."""
         extra_info = "?include_related=['job']"
         result = self._make_request(
@@ -166,7 +166,7 @@ class DbtAdminAPIClient:
 
     def get_job_run_details(
         self, account_id: int, run_id: int, debug: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get details for a specific job run."""
 
         # we add this for individual runs but not all of them
@@ -185,21 +185,21 @@ class DbtAdminAPIClient:
 
         return data
 
-    def cancel_job_run(self, account_id: int, run_id: int) -> Dict[str, Any]:
+    def cancel_job_run(self, account_id: int, run_id: int) -> dict[str, Any]:
         """Cancel a job run."""
         result = self._make_request(
             "POST", f"/api/v2/accounts/{account_id}/runs/{run_id}/cancel/"
         )
         return result.get("data", {})
 
-    def retry_job_run(self, account_id: int, run_id: int) -> Dict[str, Any]:
+    def retry_job_run(self, account_id: int, run_id: int) -> dict[str, Any]:
         """Retry a failed job run."""
         result = self._make_request(
             "POST", f"/api/v2/accounts/{account_id}/runs/{run_id}/retry/"
         )
         return result.get("data", {})
 
-    def list_job_run_artifacts(self, account_id: int, run_id: int) -> List[str]:
+    def list_job_run_artifacts(self, account_id: int, run_id: int) -> list[str]:
         """List artifacts for a job run."""
         result = self._make_request(
             "GET", f"/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/"
@@ -221,7 +221,7 @@ class DbtAdminAPIClient:
         account_id: int,
         run_id: int,
         artifact_path: str,
-        step: Optional[int] = None,
+        step: int | None = None,
     ) -> Any:
         """Get a specific job run artifact."""
         params = {}
@@ -229,9 +229,8 @@ class DbtAdminAPIClient:
             params["step"] = step
 
         get_artifact_header = {
-            "Authorization": f"Bearer {self.config.token}",
             "Accept": "*/*",
-        }
+        } | self.config.headers
 
         response = requests.get(
             f"{self.config.url}/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/{artifact_path}",

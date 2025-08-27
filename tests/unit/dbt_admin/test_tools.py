@@ -1,19 +1,20 @@
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
+from dbt_mcp.config.config import AdminApiConfig, Config
 from dbt_mcp.dbt_admin.tools import (
-    register_admin_api_tools,
-    create_admin_api_tool_definitions,
     JobRunStatus,
+    create_admin_api_tool_definitions,
+    register_admin_api_tools,
 )
-from dbt_mcp.config.config import Config, AdminApiConfig
 
 
 @pytest.fixture
 def mock_admin_config():
     return AdminApiConfig(
         account_id=12345,
-        token="test_token",
+        headers={"Authorization": "Bearer test_token"},
         url="https://cloud.getdbt.com",
     )
 

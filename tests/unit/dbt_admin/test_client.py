@@ -1,19 +1,20 @@
-import pytest
-import requests
 from unittest.mock import Mock, patch
 
-from dbt_mcp.dbt_admin.client import (
-    DbtAdminAPIClient,
-    AdminAPIError,
-)
+import pytest
+import requests
+
 from dbt_mcp.config.config import AdminApiConfig
+from dbt_mcp.dbt_admin.client import (
+    AdminAPIError,
+    DbtAdminAPIClient,
+)
 
 
 @pytest.fixture
 def admin_config():
     return AdminApiConfig(
         account_id=12345,
-        token="test_token",
+        headers={"Authorization": "Bearer test_token"},
         url="https://cloud.getdbt.com",
     )
 
@@ -22,7 +23,7 @@ def admin_config():
 def admin_config_with_prefix():
     return AdminApiConfig(
         account_id=12345,
-        token="test_token",
+        headers={"Authorization": "Bearer test_token"},
         url="https://eu1.cloud.getdbt.com",
     )
 
@@ -39,7 +40,7 @@ def client_with_prefix(admin_config_with_prefix):
 
 def test_client_initialization(client):
     assert client.config.account_id == 12345
-    assert client.config.token == "test_token"
+    assert client.config.headers == {"Authorization": "Bearer test_token"}
     assert client.config.url == "https://cloud.getdbt.com"
     assert client.headers["Authorization"] == "Bearer test_token"
     assert client.headers["Content-Type"] == "application/json"
